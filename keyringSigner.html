@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nap · Nostr keyring signer</title>
+<link rel="icon" type="image/png" href="nap.png">
+<script src="keyringSigner_script.js"></script>
+<script src="lib_nostr_tools.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f4f0; --surface: #ffffff; --border: #dddbd4;
+  --text: #1a1917; --text2: #6b6860; --text3: #a09e98;
+  --accent: #6d28d9; --accent-light: #ede9fe;
+  --warn: #92400e; --warn-bg: #fef3c7;
+  --ok-bg: #f0fdf4; --ok-border: #86efac; --ok: #15803d;
+  --mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --max: 560px;
+}
+body { background:var(--bg); color:var(--text); font-family:var(--mono); font-size:14px; line-height:1.6; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:0 16px 48px; }
+.site-header { width:100%; max-width:var(--max); padding:28px 0 20px; border-bottom:1px solid var(--border); margin-bottom:28px; display:flex; align-items:center; gap:14px; }
+.site-logo { font-size:18px; font-weight:600; color:var(--text); text-decoration:none; letter-spacing:-0.5px; }
+.site-logo span { color:var(--accent); }
+.nap-img { display:block; max-width:70px; opacity:0.65; }
+.page { width:100%; max-width:var(--max); display:flex; flex-direction:column; gap:24px; }
+.back-link { font-size:12px; color:var(--text3); text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.back-link:hover { color:var(--accent); }
+.section-label { font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text3); margin-bottom:10px; }
+.status-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.status-row { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); font-size:12px; }
+.status-row:last-child { border-bottom:none; }
+.status-dot { width:7px; height:7px; border-radius:50%; background:var(--border); flex-shrink:0; }
+.status-dot.on { background:var(--accent); }
+.status-key { color:var(--text3); width:80px; flex-shrink:0; }
+.status-val { color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.status-val.active { color:var(--accent); }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.card-header { padding:12px 16px; border-bottom:1px solid var(--border); font-size:12px; font-weight:500; color:var(--text2); text-transform:lowercase; letter-spacing:0.5px; }
+.card-body { padding:16px; display:flex; flex-direction:column; gap:14px; }
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text2); }
+.form-input { background:var(--bg); border:1px solid var(--border); border-radius:5px; padding:8px 10px; font-family:var(--mono); font-size:13px; color:var(--text); outline:none; width:100%; transition:border-color 0.15s; }
+.form-input:focus { border-color:var(--accent); }
+.form-input::placeholder { color:var(--text3); }
+.btn-row { display:flex; gap:8px; flex-wrap:wrap; }
+.btn { font-family:var(--mono); font-size:12px; padding:8px 16px; border-radius:5px; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center; gap:6px; border:none; white-space:nowrap; }
+.btn-primary { background:var(--accent); color:#fff; font-weight:500; }
+.btn-primary:hover { background:#5b21b6; }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text2); }
+.btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+.btn-danger { background:transparent; border:1px solid #fca5a5; color:#b91c1c; }
+.btn-danger:hover { background:#fef2f2; }
+.btn-outline {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--border);
+}
+.btn-outline:hover:not(:disabled) {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-light);
+}
+.btn-full { width: 100%; }
+.sources { display: flex; flex-direction: column; gap: 6px; }
+.sources a {
+  font-size: 11px;
+  color: var(--text3);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.sources a::before { content: '↗'; font-size: 10px; }
+.sources a:hover { color: var(--accent); }
+.divider { display:flex; align-items:center; gap:10px; color:var(--text3); font-size:11px; }
+.divider::before, .divider::after { content:''; flex:1; border-top:1px solid var(--border); }
+.notice { background:var(--warn-bg); border:1px solid #fcd34d; border-radius:6px; padding:10px 14px; font-size:12px; color:var(--warn); line-height:1.6; }
+.notice-ok { background:var(--ok-bg); border:1px solid var(--ok-border); border-radius:6px; padding:10px 14px; font-size:12px; color:var(--ok); display:none; }
+.notice-ok.show { display:block; }
+hr { border:none; border-top:1px solid var(--border); }
+.empty-state {
+  text-align: center;
+  padding: 32px 16px;
+  color: var(--text3);
+  font-size: 12px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
+.empty-state .em { font-size: 24px; display: block; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="site-logo" href="index.html">nkr<span>_</span>nostr keyring signer</a>
+  <!-- <img src="nap.png" alt="nap logo" class="nap-img"> -->
+</header>
+
+<main class="page">
+
+  <!-- <a class="back-link" href="index.html">← back</a> -->
+
+  <div>
+    <div class="section-label">Current Session</div>
+    <div class="status-card">
+      <div class="status-row">
+        <span class="status-dot" id="masterDot"></span>
+        <span class="status-key">master key</span>
+        <span class="status-val" id="masterVal">not logged in</span>
+      </div>
+      <div class="status-row">
+        <span class="status-dot" id="relayDot"></span>
+        <span class="status-key">relay</span>
+        <span class="status-val" id="relayVal">not selected</span>
+      </div>
+    </div>
+  </div>
+  
+  <div>
+  <div class="section-label">Account Log In</div>
+  <div class="card">
+    <div class="card-header">log in master key:</div>
+    <div class="card-body">
+
+      <div id="loginOk" class="notice-ok"></div>
+
+      <div class="form-group">
+        <label class="form-label">Input Secret Key (nsec1…)</label>
+        <input class="form-input" id="nsecMasterInput"
+          placeholder="nsec1…" autocomplete="off" spellcheck="false">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Input master relay (wss://…)</label>
+        <input class="form-input" id="relayMasterInput"
+          placeholder="wss://…" autocomplete="off" spellcheck="false">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="loginMasterWithNsec()">Log In</button>
+        <button class="btn btn-danger" onclick="logoutMaster()">Log Out</button>
+        <button class="btn btn-ghost" onclick="generateRandomNsecDefaultRelay()">Create random nsec and default relay</button>
+      </div>
+
+      <div class="notice">
+        Save the nsec in a password manager if you want to reuse it.<br>
+        This is just a test-program. Do not use a key from other apps here, and do not use keys generated here elsewhere.
+      </div>
+
+    </div>
+  </div>
+  </div>
+  
+  <div>
+      <div class="section-label">Keyring Accounts</div>
+      <div class="card">
+        <div class="card-body">
+          <div id="accountsList">
+            <div class="empty-state">
+            <span class="em">🔑</span>
+              No keyring accounts found.
+            </div>
+        </div>
+      </div>
+      </div>
+  </div>
+  
+  <div>
+  <div class="section-label">Actions</div>
+  <div class="card">
+    <div class="card-header">create subaccount:</div>
+    <div class="card-body">
+
+      <div id="loginOk" class="notice-ok"></div>
+
+      <div class="form-group">
+        <label class="form-label">Input subaccount name</label>
+        <input class="form-input" id="nameSubInput"
+          placeholder="…" autocomplete="off" spellcheck="false">
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Input subaccount description</label>
+        <input class="form-input" id="descriptionSubInput"
+          placeholder="…" autocomplete="off" spellcheck="false">
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="generateAndPublishSubAccount()">Generate &amp; Publish</button>
+        <button class="btn btn-ghost" onclick="clearSubAccountForm()">Clear</button>
+      </div>
+
+    </div>
+  </div>
+  </div>
+  
+  <img src="nap.png" alt="nap logo" class="nap-img">
+  
+  <hr>
+    <div>
+      <div class="section-label">Sources</div>
+      <div class="sources">
+        <a href="https://github.com/adq8z9/nostr_keyring" target="_blank">nostr_keyring · NIP specification</a>
+        <a href="https://github.com/adq8z9/nkr" target="_blank">nkr · this app code</a>
+        <a href="https://github.com/nostr-protocol/nips" target="_blank">nostr-protocol/nips · main protocol</a>
+        <a href="https://github.com/nbd-wtf/nostr-tools" target="_blank">nostr-tools · used javascript script</a>
+      </div>
+    </div>
+  
+</main>
+
+<script>
+function showOk(msg) {
+  const el = document.getElementById('loginOk');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+updateStatus();
+updateStatus2();
+</script>
+</body>
+</html>
