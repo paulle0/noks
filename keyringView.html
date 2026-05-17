@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nks · View Keyring</title>
+<link rel="icon" type="image/png" href="nap.png">
+<script src="index_script_logindata.js"></script>
+<script src="keyringView_script.js"></script>
+<script src="lib_nostr_tools.js"></script>
+<script src="index_script_relaycomm.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f4f0; --surface: #ffffff; --border: #dddbd4;
+  --text: #1a1917; --text2: #6b6860; --text3: #a09e98;
+  --accent: #6d28d9; --accent-light: #ede9fe;
+  --warn: #92400e; --warn-bg: #fef3c7;
+  --ok-bg: #f0fdf4; --ok-border: #86efac; --ok: #15803d;
+  --mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --max: 560px;
+}
+body { background:var(--bg); color:var(--text); font-family:var(--mono); font-size:14px; line-height:1.6; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:0 16px 48px; }
+.site-header { width:100%; max-width:var(--max); padding:28px 0 20px; border-bottom:1px solid var(--border); margin-bottom:28px; display:flex; align-items:center; gap:14px; }
+.site-logo { font-size:18px; font-weight:600; color:var(--text); text-decoration:none; letter-spacing:-0.5px; }
+.site-logo span { color:var(--accent); }
+.nap-img { display:block; max-width:70px; opacity:0.65; }
+.page { width:100%; max-width:var(--max); display:flex; flex-direction:column; gap:24px; }
+.back-link { font-size:12px; color:var(--text3); text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.back-link:hover { color:var(--accent); }
+.section-label { font-size:10px; text-transform:uppercase; letter-spacing:1.2px; color:var(--text3); margin-bottom:10px; }
+
+/* status */
+.status-card { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.status-row { display:flex; align-items:center; gap:10px; padding:10px 14px; border-bottom:1px solid var(--border); font-size:12px; }
+.status-row:last-child { border-bottom:none; }
+.status-dot { width:7px; height:7px; border-radius:50%; background:var(--border); flex-shrink:0; }
+.status-dot.on { background:var(--accent); }
+.status-key { color:var(--text3); width:80px; flex-shrink:0; }
+.status-val { color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.status-val.active { color:var(--accent); }
+
+/* empty */
+.empty-state { background:var(--surface); border:1px dashed var(--border); border-radius:8px; padding:36px 20px; text-align:center; display:flex; flex-direction:column; align-items:center; gap:8px; }
+.empty-icon { font-size:24px; opacity:0.3; }
+.empty-text { font-size:12px; color:var(--text3); }
+.empty-link { font-size:12px; color:var(--accent); text-decoration:none; }
+.empty-link:hover { text-decoration:underline; }
+
+/* card 
+.card { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.card-header { padding:12px 16px; border-bottom:1px solid var(--border); font-size:12px; font-weight:500; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; }
+.card-body { padding:16px; display:flex; flex-direction:column; gap:14px; }*/
+/* card */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+.card-header { padding:12px 16px; border-bottom:1px solid var(--border); font-size:12px; font-weight:500; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; display:flex; align-items:center; justify-content:space-between; }
+.card-body { padding:16px; display:flex; flex-direction:column; gap:12px; }
+
+/* form */
+.form-group { display:flex; flex-direction:column; gap:5px; }
+.form-label { font-size:11px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text2); }
+.form-hint { font-size:11px; color:var(--text3); }
+.form-input, .form-textarea {
+  background:var(--bg); border:1px solid var(--border); border-radius:5px;
+  padding:8px 10px; font-family:var(--mono); font-size:13px; color:var(--text);
+  outline:none; width:100%; transition:border-color 0.15s;
+}
+.form-input:focus, .form-textarea:focus { border-color:var(--accent); }
+.form-input::placeholder, .form-textarea::placeholder { color:var(--text3); }
+.form-textarea { resize:vertical; min-height:64px; }
+
+hr { border:none; border-top:1px solid var(--border); }
+
+/* list sections */
+.list-section { border-top:1px solid var(--border); }
+.list-header { padding:10px 16px; font-size:10px; text-transform:uppercase; letter-spacing:1px; color:var(--text3); background:var(--bg); display:flex; justify-content:space-between; align-items:center; }
+.list-count { font-size:10px; color:var(--text3); }
+.list-item { display:flex; align-items:baseline; gap:8px; padding:8px 16px; border-bottom:1px solid var(--border); font-size:12px; }
+.list-item:last-child { border-bottom:none; }
+.list-id { color:var(--text3); font-size:10px; flex-shrink:0; }
+.list-name { color:var(--text2); }
+.list-desc { color:var(--text3); font-size:11px; margin-left:auto; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px; }
+.list-empty { padding:10px 16px; font-size:12px; color:var(--text3); font-style:italic; }
+
+/* table */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th { padding:8px 12px; text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text3); border-bottom:1px solid var(--border); font-weight:500; white-space:nowrap; }
+tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s; }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--accent-light); }
+td { padding:9px 12px; color:var(--text2); vertical-align:middle; }
+td.date { color:var(--text3); white-space:nowrap; }
+td.desc { color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+td.desc2 { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+td.desc3 { color:var(--text3); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+td.desc4 { color:var(--accent);; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/*td.desc { color:var(--text); max-width:140px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }*/
+td.amount { text-align:right; font-weight:500; white-space:nowrap; }
+td.event-id { color:var(--text3); font-size:10px; }
+
+/* list editor */
+.list-editor { display:flex; flex-direction:column; gap:6px; }
+.list-item-row {
+  display:grid; grid-template-columns:90px 1fr 1fr auto;
+  gap:6px; align-items:center;
+}
+.list-item-row.with-pubkey { grid-template-columns:90px 1fr 1fr 1fr auto; }
+.list-col-label { font-size:10px; text-transform:uppercase; letter-spacing:0.8px; color:var(--text3); padding:0 2px; }
+.form-input-sm {
+  background:var(--bg); border:1px solid var(--border); border-radius:5px;
+  padding:6px 8px; font-family:var(--mono); font-size:12px; color:var(--text);
+  outline:none; width:100%; transition:border-color 0.15s;
+}
+.form-input-sm:focus { border-color:var(--accent); }
+.form-input-sm::placeholder { color:var(--text3); }
+.btn-remove {
+  background:none; border:1px solid #fca5a5; border-radius:4px; color:#b91c1c;
+  font-size:12px; cursor:pointer; padding:5px 8px; line-height:1;
+  font-family:var(--mono); transition:background 0.15s; flex-shrink:0;
+}
+.btn-remove:hover { background:#fef2f2; }
+.btn-add {
+  background:none; border:1px dashed var(--border); border-radius:5px;
+  color:var(--text3); font-size:12px; cursor:pointer; padding:7px 12px;
+  font-family:var(--mono); transition:all 0.15s; text-align:left;
+  display:flex; align-items:center; gap:6px; width:100%;
+}
+.btn-add:hover { border-color:var(--accent); color:var(--accent); }
+
+/* buttons */
+.btn-row { display:flex; gap:8px; flex-wrap:wrap; }
+.btn { font-family:var(--mono); font-size:12px; padding:8px 16px; border-radius:5px; cursor:pointer; transition:all 0.15s; display:inline-flex; align-items:center; gap:6px; border:none; white-space:nowrap; }
+.btn-primary { background:var(--accent); color:#fff; font-weight:500; }
+.btn-primary:hover { background:#5b21b6; }
+.btn-ghost { background:transparent; border:1px solid var(--border); color:var(--text2); }
+.btn-ghost:hover { border-color:var(--accent); color:var(--accent); }
+
+/* notices */
+.notice { background:var(--warn-bg); border:1px solid #fcd34d; border-radius:6px; padding:10px 14px; font-size:12px; color:var(--warn); line-height:1.6; }
+.notice-ok { background:var(--ok-bg); border:1px solid var(--ok-border); border-radius:6px; padding:10px 14px; font-size:12px; color:var(--ok); display:none; }
+.notice-ok.show { display:block; }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="site-logo" href="index.html">nks<span>_</span></a>
+  <!-- <img src="nap.png" alt="nap logo" class="nap-img"> -->
+</header>
+
+<main class="page">
+
+  <a class="back-link" href="index.html">← back</a>
+
+  <div>
+    <div class="section-label">Current Session</div>
+    <div class="status-card">
+      <div class="status-row">
+        <span class="status-dot" id="masterDot"></span>
+        <span class="status-key">master key</span>
+        <span class="status-val" id="masterVal">not logged in</span>
+      </div>
+      <div class="status-row">
+        <span class="status-dot" id="relayDot"></span>
+        <span class="status-key">relay</span>
+        <span class="status-val" id="relayVal">not selected</span>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">View Keyring</div>
+    <div id="editContent">
+      <div class="empty-state">
+        <div class="empty-icon">✎</div>
+        <div class="empty-text">No masterkey logged in.</div>
+        <a class="empty-link" href="loginMasterkey.html">Log in a masterkey →</a>
+      </div>
+    </div>
+  </div>
+  <img src="nap.png" alt="nap logo" class="nap-img">
+</main>
+
+<script>
+function updateStatus2() {
+  console.log("updateStatus2 called.");
+  try {
+    const loginMasterDataString = localStorage.getItem("liMasterKeypair");
+    const loginMasterData = JSON.parse(loginMasterDataString);
+    const loginKeyringString = localStorage.getItem("liKeyringEvent");
+    const loginKeyring = JSON.parse(loginKeyringString);
+    if (loginMasterData) {
+      console.log("loginMasterData found.");
+      if (loginKeyring) {
+        console.log("loginKeyringData found.");
+        try {
+          //renderForm(loginKeyring);
+          renderTable(loginKeyring);
+        } catch (error) {
+          document.getElementById('editContent').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">≡</div>
+            <div class="empty-text">Something went wrong while loading: ${error}</div>
+          </div>`;
+        }
+      } else {
+        console.log("No loginKeyringData found.");
+        document.getElementById('editContent').innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🔑</div>
+            <div class="empty-text"> No keyring related keys found.</div>
+          </div>`;
+      }
+    } else {
+      console.log("No loginMasterData found.");
+    }
+  } catch(e) {}
+}
+
+function renderList(items, emptyMsg) {
+  if (!items || !items.length) {
+    return `<div class="list-empty">${emptyMsg}</div>`;
+  }
+  return items.map(item =>
+    `<div class="list-item">
+      <span class="list-id">${item[0] || ''}</span>
+      <span class="list-name">${item[1].slice(0,7) || '—'}</span>
+      ${item[2] ? `<span class="list-desc">${item[2]}</span>` : ''}
+    </div>`
+  ).join('');
+}
+
+function renderTable(keyringEvent) {
+  console.log("renderTable called.");
+  const area = document.getElementById('editContent');
+  if (!area) return;
+
+  if (!keyringEvent.tags.length) {
+    area.innerHTML = `<div class="empty-state"><div class="empty-icon">🔑</div><div class="empty-text">No keyring related keys found.</div></div>`;
+    return;
+  }
+  
+  let keyringContent = JSON.parse(keyringEvent.content);
+  console.log(keyringContent);
+  
+  let entries = [];
+  for (i=0; i < keyringContent.length; i++) {
+    let entry = keyringContent[i];
+    if(keyringContent[i].relation == 'S') { entry.relation = "Subkey"; }
+    else if(keyringContent[i].relation == 'O') { entry.relation = "Otherkey"; }
+    else if(keyringContent[i].relation == 'M') { entry.relation = "Masterkey"; }
+    let pkHex = keyringContent[i].pubkey;
+    let pk = NostrTools.nip19.npubEncode(pkHex);
+    let pkShort = pk.slice(0,8) + "..." + pk.slice(-8);
+    entry.pubkey = pkShort;
+    console.log(entry);
+    entries.push(entry);
+  }
+
+  const rows = entries.map(e => {
+    return `<tr onclick="showDetail('${e.pubkey}')">
+      <td class="desc">${e.relation}</td>
+      <td class="desc2">${e.name}</td>
+      <td class="desc">${e.description}</td>
+      <td class="desc4">${e.pubkey}</td>
+      <td class="desc">${e.function}</td>
+    </tr>`;
+  }).join('');
+
+  area.innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        Keyring Details
+        <span style="font-weight:400;color:var(--text3)">${entries.length}</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Npub</th>
+              <th>Function</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+
+function renderForm(loginKeyring) {
+  console.log("renderForm called.");
+  /*document.getElementById('editContent').innerHTML = `
+    <div id="publishOk" class="notice-ok"></div>
+
+    <div class="card">
+      <div class="card-header">input data</div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Input name</label>
+          <input class="form-input" id="subkeyNameInput" placeholder="…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Input description</label>
+          <input class="form-input" id="subkeyDescriptionInput" placeholder="…" autocomplete="off" spellcheck="false">
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" onclick="generateAndPublishSubkey()">Generate &amp; Publish</button>
+          <button class="btn btn-ghost" onclick="clearSubkeyForm()">Clear</button>
+        </div>
+        <div class="notice">
+          Generate and publish will create a random subkey, which can be used for a subkey log in.<br>
+          Conduct log in in the view_keyring menu point.
+        </div>
+      </div>
+    </div> `;*/
+  document.getElementById('editContent').innerHTML = `
+    <div class="card">
+      <div class="card-header">Keyring Details</div>
+      <div class="card-body">
+      
+        <div class="list-section">
+          <div class="list-header">
+            Related Keys
+            <span class="list-count">${(loginKeyring.tags||[]).length}</span>
+          </div>
+          ${renderList(loginKeyring.tags, 'no related keys defined')}
+        </div>
+
+      </div>
+    </div>`;
+}
+
+function showDetail(id) {
+  //const e = allEntries.find(x => x.id === id);
+  //if (!e) return;
+  //const m = JSON.parse(e.content);
+  // TODO: open a detail view or modal
+  console.log('Posting detail:', id);
+}
+
+updateStatus();
+updateStatus2();
+</script>
+</body>
+</html>

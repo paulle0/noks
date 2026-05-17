@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nap · To Be Implemented</title>
+<link rel="icon" type="image/png" href="nap.png">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #f5f4f0; --surface: #ffffff; --border: #dddbd4;
+  --text: #1a1917; --text2: #6b6860; --text3: #a09e98;
+  --accent: #6d28d9; --accent-light: #ede9fe;
+  --mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --max: 560px;
+}
+body { background:var(--bg); color:var(--text); font-family:var(--mono); font-size:14px; line-height:1.6; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:0 16px 48px; }
+.site-header { width:100%; max-width:var(--max); padding:28px 0 20px; border-bottom:1px solid var(--border); margin-bottom:28px; display:flex; align-items:center; gap:14px; }
+.site-logo { font-size:18px; font-weight:600; color:var(--text); text-decoration:none; letter-spacing:-0.5px; }
+.site-logo span { color:var(--accent); }
+.nap-img { display:block; max-width:70px; opacity:0.65; }
+.page { width:100%; max-width:var(--max); display:flex; flex-direction:column; gap:24px; }
+.back-link { font-size:12px; color:var(--text3); text-decoration:none; display:inline-flex; align-items:center; gap:4px; }
+.back-link:hover { color:var(--accent); }
+.tbi-box {
+  background: var(--surface);
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+.tbi-icon { font-size: 28px; opacity: 0.4; }
+.tbi-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.4px;
+  color: var(--text3);
+}
+.tbi-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text2);
+  letter-spacing: -0.3px;
+}
+.tbi-page {
+  font-size: 11px;
+  color: var(--text3);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 3px 10px;
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="site-logo" href="index.html">nap<span>_</span></a>
+  <!-- <img src="nap.png" alt="nap logo" class="nap-img"> -->
+</header>
+
+<main class="page">
+
+  <a class="back-link" id="backLink" href="index.html">← back</a>
+
+  <div class="tbi-box">
+    <div class="tbi-icon">⧖</div>
+    <div class="tbi-label">not yet implemented</div>
+    <div class="tbi-title" id="pageTitle">to be implemented</div>
+    <div class="tbi-page" id="pageName"></div>
+  </div>
+  <img src="nap.png" alt="nap logo" class="nap-img">
+
+</main>
+
+<script>
+  // Usage: link to this page as placeholder.html?title=Ledger+Postings&back=posting.html
+  // or just use it as-is and it will show the current filename
+  const params = new URLSearchParams(window.location.search);
+  const title = params.get('title');
+  const back = params.get('back');
+
+  if (title) document.getElementById('pageTitle').textContent = title;
+  if (back) document.getElementById('backLink').href = back;
+
+  const name = window.location.pathname.split('/').pop() || 'this page';
+  document.getElementById('pageName').textContent = name;
+  if (title) document.title = 'nap · ' + title;
+</script>
+</body>
+</html>

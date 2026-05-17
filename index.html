@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>nks · Nostr Keyring Signer</title>
+<link rel="icon" type="image/png" href="nap.png">
+<script src="index_script_logindata.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --border: #dddbd4;
+  --text: #1a1917;
+  --text2: #6b6860;
+  --text3: #a09e98;
+  --accent: #6d28d9;
+  --accent-light: #ede9fe;
+  --warn: #92400e;
+  --warn-bg: #fef3c7;
+  --mono: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, 'DejaVu Sans Mono', monospace;
+  --max: 560px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px 48px;
+}
+
+.site-header {
+  width: 100%;
+  max-width: var(--max);
+  padding: 28px 0 20px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.site-logo {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+.site-logo span { color: var(--accent); }
+
+.page {
+  width: 100%;
+  max-width: var(--max);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.notice {
+  background: var(--warn-bg);
+  border: 1px solid #fcd34d;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--warn);
+  line-height: 1.5;
+}
+
+.section-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text3);
+  margin-bottom: 10px;
+}
+
+/* status card */
+.status-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+.status-row:last-child { border-bottom: none; }
+
+.status-key {
+  color: var(--text3);
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.status-val {
+  color: var(--text2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.status-val.active { color: var(--accent); }
+
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+.status-dot.on { background: var(--accent); }
+
+/* nav */
+.nav-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  text-decoration: none;
+  font-size: 13px;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.nav-link:hover {
+  border-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--accent);
+}
+.nav-icon { color: var(--text3); width: 18px; text-align: center; flex-shrink: 0; }
+.nav-link:hover .nav-icon { color: var(--accent); }
+.nav-desc { font-size: 11px; color: var(--text3); margin-left: auto; }
+.nav-link:hover .nav-desc { color: var(--accent); opacity: 0.7; }
+
+/* sources */
+.sources { display: flex; flex-direction: column; gap: 6px; }
+.sources a {
+  font-size: 11px;
+  color: var(--text3);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.sources a::before { content: '↗'; font-size: 10px; }
+.sources a:hover { color: var(--accent); }
+
+.nap-img { display: block; max-width: 90px; opacity: 0.65; }
+
+hr { border: none; border-top: 1px solid var(--border); }
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <a class="site-logo" href="index.html">nks<span>_</span>nostr keyring signer</a>
+  <!-- <img src="nap.png" alt="nap logo" class="nap-img" style="max-width:36px;opacity:0.75;margin-left:auto"> -->
+</header>
+
+<main class="page">
+
+  <div>
+    <div class="section-label">Current Session</div>
+    <div class="status-card">
+      <div class="status-row">
+        <span class="status-dot" id="masterDot"></span>
+        <span class="status-key">master key</span>
+        <span class="status-val" id="masterVal">not logged in</span>
+      </div>
+      <div class="status-row">
+        <span class="status-dot" id="relayDot"></span>
+        <span class="status-key">relay</span>
+        <span class="status-val" id="relayVal">not selected</span>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="section-label">Menu</div>
+    <nav class="nav-menu">
+      <a class="nav-link" href="keyringView.html">
+        <span class="nav-icon">≡</span>
+        View Keyring
+        <span class="nav-desc">kind 17791</span>
+      </a>
+      <a class="nav-link" href="subkeyNlogin.html">
+        <span class="nav-icon">↗</span>
+        Nlogin Subkey
+        <span class="nav-desc">nlogin</span>
+      </a>
+      <a class="nav-link" href="subkeyCreate.html">
+        <span class="nav-icon">+</span>
+        Create Subkey
+        <span class="nav-desc">register</span>
+      </a>
+      <a class="nav-link" href="subkeyRemove.html">
+        <span class="nav-icon">-</span>
+        Remove Subkey
+        <span class="nav-desc">remove</span>
+      </a>
+      <a class="nav-link" href="loginMasterkey.html">
+        <span class="nav-icon">→</span>
+        Log In Masterkey
+        <span class="nav-desc">nsec</span>
+      </a>
+    </nav>
+  </div>
+  
+  <div class="notice">
+    This is a test program — do not use with real data. <br>Use example data only for throw-away purposes.
+  </div>
+
+  <img src="nap.png" alt="nap logo" class="nap-img">
+
+  <hr>
+
+  <div>
+      <div class="section-label">Sources</div>
+      <div class="sources">
+        <a href="https://github.com/adq8z9/nostr_keyring" target="_blank">nostr_keyring_nip · this app protocol</a>
+        <a href="https://github.com/adq8z9/nkr" target="_blank">nks · this app code</a>
+        <a href="https://github.com/nostr-protocol/nips" target="_blank">nostr-protocol/nips · general main nostr protocol</a>
+        <a href="https://github.com/nbd-wtf/nostr-tools" target="_blank">nostr-tools · used javascript script</a>
+      </div>
+    </div>
+
+</main>
+
+<script>
+  updateStatus();
+</script>
+</body>
+</html>
