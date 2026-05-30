@@ -56,8 +56,9 @@ function renderMasterCard() {
   const relays = m.homeRelays.map((r) => `<span class="relay-pill">${escapeHtml(r)}</span>`).join("");
   document.getElementById("masterCard").innerHTML = `
     <div class="key-master-label">Masterkey</div>
-    <div class="key-master-name">Sovereign root</div>
+    <div class="key-master-name">Root</div>
     <div class="key-master-npub" title="${escapeHtml(npub)}">${escapeHtml(npub)}</div>
+    <div class="key-master-npub" title="${escapeHtml(m.pubkey)}">${escapeHtml(m.pubkey)}</div>
     <div class="key-master-relays">${relays || "<span class='relay-pill'>no relays</span>"}</div>
     <div class="key-master-actions">
       <button class="link-btn" data-action="publish-public">Publish kind 17991</button>
