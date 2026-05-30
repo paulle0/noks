@@ -44,6 +44,14 @@
   margin-top: 4px;
 }
 
+.hero-logo {
+  width: 140px;
+  height: auto;
+  margin: var(--space-5) auto;
+  display: block;
+  filter: drop-shadow(0 4px 20px rgba(109, 40, 217, 0.35));
+}
+
 .topnav {
   display: flex;
   gap: var(--space-2);
