@@ -133,4 +133,26 @@ async function doSetup(panel, tab) {
   setSessionPassword(pw);
   setState({ masterkey, keyring: [], view: "dashboard" });
   toast("Vault created", "success");
+
+  // For imported keys, try to pull existing keyring from relays
+  if (tab === "import") {
+    await fetchAndMergeKeyring(masterkey);
+  }
+}
+
+async function fetchAndMergeKeyring(masterkey) {
+  toast("Checking relays for existing keyring…");
+  try {
+    const existing = await fetchExistingKeyring(masterkey);
+    if (existing.length > 0) {
+      setState({ keyring: existing });
+      await persistVault();
+      toast(`Imported ${existing.length} key(s) from relays`, "success");
+    } else {
+      toast("No existing keyring found on relays", "info");
+    }
+  } catch (e) {
+    console.warn("Keyring fetch failed:", e);
+    toast("Could not fetch keyring from relays", "error");
+  }
 }
