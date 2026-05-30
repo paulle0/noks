@@ -169,10 +169,10 @@
   gap: var(--space-3);
   padding: var(--space-6);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   color: var(--text-faint);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  text-transform: lowercase;
+  letter-spacing: 0.04em;
   border-top: 1px solid var(--border);
 }
 .footer span:nth-child(even) { color: var(--text-faint); opacity: 0.5; }
