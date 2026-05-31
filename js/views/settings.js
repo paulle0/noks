@@ -1,9 +1,10 @@
-// js/views/settings.js — Manage relays, change password, wipe vault
+// js/views/settings.js — Manage relays, change password, export nsec, wipe vault
 import { state, setState } from "../state.js";
 import { saveVault, hasVault } from "../storage.js";
 import { setSessionPassword, lockSession, persistVault } from "../keyring.js";
 import { normalizeRelayUrl } from "../relays.js";
-import { toast, escapeHtml, modal } from "../ui-utils.js";
+import { nsecFromHex } from "../nip19.js";
+import { toast, escapeHtml, modal, copy, attachCopy } from "../ui-utils.js";
 
 export function renderSettings() {
   const root = document.getElementById("settingsCard");
@@ -19,6 +20,7 @@ export function renderSettings() {
         <button class="btn-primary" id="saveRelaysBtn" style="margin-left:auto;">Save relays</button>
       </div>
     </div>
+    ${renderNsecSection()}
     <div class="settings-section">
       <h4>Vault password</h4>
       <p>Re-encrypts the local vault with a new password. You'll need it to unlock the app next time.</p>
@@ -31,9 +33,50 @@ export function renderSettings() {
       <button class="btn-danger" id="wipeBtn">Wipe local vault</button>
     </div>`;
   wireRelays(root);
+  wireNsecReveal(root);
+  attachCopy(root);
   root.querySelector("#saveRelaysBtn").addEventListener("click", () => onSaveRelays(root));
   root.querySelector("#changePwBtn").addEventListener("click", () => onChangePw(root));
   root.querySelector("#wipeBtn").addEventListener("click", onWipe);
+}
+
+function renderNsecSection() {
+  if (!state.masterkey || !state.masterkey.seckey) return "";
+  return `
+    <div class="settings-section">
+      <h4>Masterkey secret</h4>
+      <p>Copy your masterkey nsec to store it in a password manager. Never share this with anyone.</p>
+      <div id="nsecContainer">
+        <button class="btn-secondary" id="revealNsecBtn">Reveal &amp; copy nsec</button>
+      </div>
+    </div>`;
+}
+
+function wireNsecReveal(root) {
+  const btn = root.querySelector("#revealNsecBtn");
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    const ok = await modal({
+      title: "Reveal masterkey nsec?",
+      body: `<p>Your masterkey secret will be shown on screen. Make sure nobody else can see your display.</p>`,
+      confirmText: "Reveal", confirmKind: "primary",
+    });
+    if (!ok) return;
+    const nsec = nsecFromHex(state.masterkey.seckey);
+    const container = root.querySelector("#nsecContainer");
+    container.innerHTML = `
+      <div class="copy-row">
+        <input class="input mono" type="password" value="${escapeHtml(nsec)}" readonly id="nsecInput" />
+        <button class="copy-btn" data-copy="${escapeHtml(nsec)}">Copy</button>
+        <button class="btn-ghost" id="toggleNsecVis" title="Show / hide" style="padding:0 12px;">👁</button>
+      </div>
+      <p class="field-hint">Handle with extreme care — this controls your masterkey identity.</p>`;
+    attachCopy(container);
+    container.querySelector("#toggleNsecVis").addEventListener("click", () => {
+      const inp = container.querySelector("#nsecInput");
+      inp.type = inp.type === "password" ? "text" : "password";
+    });
+  });
 }
 
 function relayRow(value = "") {
