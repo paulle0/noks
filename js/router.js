@@ -2,16 +2,14 @@
 import { state } from "./state.js";
 import { renderLogin } from "./views/login.js";
 import { renderDashboard } from "./views/dashboard.js";
-import { renderImport, leaveImport } from "./views/import.js";
+import { renderNlogin, leaveNlogin } from "./views/nlogin.js";
 import { renderKeyDetail } from "./views/keydetail.js";
 import { renderSettings } from "./views/settings.js";
-import { renderExport } from "./views/export.js";
 
 const renderers = {
   login: renderLogin,
   dashboard: renderDashboard,
-  import: renderImport,
-  export: renderExport,
+  nlogin: renderNlogin,
   key: renderKeyDetail,
   settings: renderSettings,
 };
@@ -34,8 +32,8 @@ export async function applyView() {
   topnav.querySelectorAll(".nav-link").forEach((b) => {
     b.classList.toggle("active", b.dataset.view === v || (v === "key" && b.dataset.view === "dashboard"));
   });
-  // Stop scanner if leaving import
-  if (currentView === "import" && v !== "import") await leaveImport();
+  // Stop scanner if leaving nlogin
+  if (currentView === "nlogin" && v !== "nlogin") await leaveNlogin();
   currentView = v;
 }
 
