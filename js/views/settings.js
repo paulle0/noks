@@ -11,7 +11,7 @@ export function renderSettings() {
   root.innerHTML = `
     <div class="settings-section">
       <h4>Home relays</h4>
-      <p>These relays receive your kind 17991 / 17992 events. The set is also embedded in every nlogin you share.</p>
+      <p>These relays receive your kind 17991 (public) / 17992 (private) keyring events. The set is also embedded in every nlogin you share.</p>
       <div id="relaySettingsList">
         ${state.masterkey.homeRelays.map(relayRow).join("")}
       </div>
@@ -28,7 +28,7 @@ export function renderSettings() {
       <button class="btn-secondary" id="changePwBtn">Change password</button>
     </div>
     <div class="settings-section">
-      <h4>Danger zone</h4>
+      <h4>Log out</h4>
       <p>Erases the local vault. Any keys published to relays remain on those relays.</p>
       <button class="btn-danger" id="wipeBtn">Wipe local vault</button>
     </div>`;
@@ -45,7 +45,7 @@ function renderNsecSection() {
   return `
     <div class="settings-section">
       <h4>Masterkey secret</h4>
-      <p>Copy your masterkey nsec to store it in a password manager. Never share this with anyone.</p>
+      <p>Copy your masterkey secretkey to store it in a password manager. Never share this with anyone.</p>
       <div id="nsecContainer">
         <button class="btn-secondary" id="revealNsecBtn">Reveal &amp; copy nsec</button>
       </div>
