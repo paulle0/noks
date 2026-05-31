@@ -1,4 +1,4 @@
-// js/views/keydetail.js — Inspect a key, generate a new subkey, share nlogin
+// js/views/keydetail.js — Inspect a key, generate a new related key, share nlogin
 import { state, setState, findKey } from "../state.js";
 import { generateKeyPair, shortHex } from "../crypto.js";
 import { npubFromHex, nsecFromHex } from "../nip19.js";
@@ -9,7 +9,7 @@ import { toast, copy, modal, escapeHtml, attachCopy } from "../ui-utils.js";
 
 export async function renderKeyDetail() {
   const root = document.getElementById("keyDetailCard");
-  if (state._newSubkey) { renderNewSubkeyForm(root); return; }
+  if (state._newSubkey) { renderNewRelatedKeyForm(root); return; }
   const key = findKey(state.selectedKey);
   if (!key) { toast("Key not found"); setState({ view: "dashboard" }); return; }
   await renderExistingKey(root, key);
@@ -123,12 +123,29 @@ function summarize(results, label) {
   else toast(`${label} publish failed`, "error");
 }
 
-function renderNewSubkeyForm(root) {
+function renderNewRelatedKeyForm(root) {
+  const relations = [
+    { value: "S", label: "Subkey", desc: "A delegated key under your masterkey" },
+    { value: "O", label: "Otherkey", desc: "An unrelated key you want to track" },
+    { value: "M", label: "Masterkey", desc: "Another masterkey reference" },
+  ];
+  const relOptions = relations.map((r) =>
+    `<label class="chip-check">
+      <input type="radio" name="relationType" value="${r.value}" ${r.value === "S" ? "checked" : ""} />
+      ${r.label}
+    </label>`
+  ).join("");
+
   root.innerHTML = `
     <div class="detail-head">
-      <h2 class="detail-name">New subkey</h2>
+      <h2 class="detail-name">New related key</h2>
     </div>
-    <p class="card-subtitle">Generate a fresh keypair to delegate to a client. The nsec stays in this vault — you'll share an <code>nlogin1…</code> instead.</p>
+    <p class="card-subtitle">Generate a fresh keypair and add it to your keyring. The nsec stays in this vault — you'll share an <code>nlogin1…</code> instead.</p>
+    <div class="field">
+      <label>Relation type</label>
+      <div class="checkbox-row" id="relationRow">${relOptions}</div>
+      <p class="field-hint" id="relationHint">${relations[0].desc}</p>
+    </div>
     <div class="field"><label>Name</label><input id="nName" class="input" placeholder="e.g. Damus iOS" /></div>
     <div class="field"><label>Description</label><input id="nDesc" class="input" placeholder="optional" /></div>
     <div class="field"><label>Functions</label>
@@ -137,14 +154,22 @@ function renderNewSubkeyForm(root) {
           `<label class="chip-check"><input type="checkbox" value="${f}" ${f==="signing"?"checked":""}> ${f}</label>`).join("")}
       </div>
     </div>
-    <button class="btn-primary" id="createSubBtn" style="width:100%">Generate subkey</button>`;
-  root.querySelector("#createSubBtn").addEventListener("click", async () => {
+    <button class="btn-primary" id="createRelBtn" style="width:100%">Generate key</button>`;
+
+  // Update hint text when relation type changes
+  root.querySelector("#relationRow").addEventListener("change", (e) => {
+    const sel = relations.find((r) => r.value === e.target.value);
+    if (sel) root.querySelector("#relationHint").textContent = sel.desc;
+  });
+
+  root.querySelector("#createRelBtn").addEventListener("click", async () => {
+    const relation = root.querySelector('input[name="relationType"]:checked').value;
     const name = root.querySelector("#nName").value.trim();
     const description = root.querySelector("#nDesc").value.trim();
-    const functions = [...root.querySelectorAll(".chip-check input:checked")].map((i) => i.value);
+    const functions = [...root.querySelectorAll(".chip-check input[type=checkbox]:checked")].map((i) => i.value);
     const { seckey, pubkey } = generateKeyPair();
-    await addKeyEntry({ relation: "S", pubkey, seckey, name, description, functions });
-    toast("Subkey added — ready to share", "success");
+    await addKeyEntry({ relation, pubkey, seckey, name, description, functions });
+    toast("Key added — ready to share", "success");
     setState({ view: "key", selectedKey: pubkey, _newSubkey: false });
   });
 }

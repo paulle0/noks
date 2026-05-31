@@ -25,7 +25,7 @@ function wireActions() {
 async function handleAction(action) {
   if (action === "goto-import") return setState({ view: "import" });
   if (action === "goto-export") return setState({ view: "export", _exportKey: null });
-  if (action === "new-subkey") return openNewSubkeyView();
+  if (action === "new-related-key") return openNewRelatedKeyView();
   if (action === "back-to-dashboard") return setState({ view: "dashboard" });
   if (action === "publish-keyring") return publishKeyring();
   if (action === "refresh-keyring") return refreshKeyring();
@@ -66,7 +66,7 @@ function summarizePublish(results, label) {
   else toast(`${label} publish failed — ${results[0]?.error || "all relays rejected"}`, "error");
 }
 
-function openNewSubkeyView() {
+function openNewRelatedKeyView() {
   setState({ view: "key", _newSubkey: true });
 }
 
