@@ -5,11 +5,13 @@ import { renderDashboard } from "./views/dashboard.js";
 import { renderImport, leaveImport } from "./views/import.js";
 import { renderKeyDetail } from "./views/keydetail.js";
 import { renderSettings } from "./views/settings.js";
+import { renderExport } from "./views/export.js";
 
 const renderers = {
   login: renderLogin,
   dashboard: renderDashboard,
   import: renderImport,
+  export: renderExport,
   key: renderKeyDetail,
   settings: renderSettings,
 };
