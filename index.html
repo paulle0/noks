@@ -1,84 +1,93 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>noks · nostr keyring signer</title>
-<link rel="icon" type="image/svg+xml" href="assets/nks.svg" />
-<link rel="stylesheet" href="css/theme.css" />
-<link rel="stylesheet" href="css/layout.css" />
-<link rel="stylesheet" href="css/components.css" />
-<link rel="stylesheet" href="css/overlays.css" />
-<link rel="stylesheet" href="css/views.css" />
-<link rel="stylesheet" href="css/keys.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NKS · Nostr Keyring Signer</title>
+  <link rel="icon" href="assets/nks.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/theme.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/overlays.css" />
+  <link rel="stylesheet" href="css/views.css" />
+  <link rel="stylesheet" href="css/keys.css" />
 </head>
 <body>
+
 <div class="grain"></div>
 
+<!-- ========== Topbar ========== -->
 <header class="topbar">
-  <div class="brand">
-    <img src="assets/nks.svg" alt="nks" class="brand-mark" />
-    <div class="brand-text">
-      <span class="brand-title">noks</span>
+  <a href="#" class="brand" onclick="event.preventDefault()">
+    <img src="assets/nks.svg" alt="NKS" class="brand-mark" />
+    <span class="brand-text">
+      <span class="brand-title">NKS</span>
       <span class="brand-sub">nostr keyring signer</span>
-    </div>
-  </div>
+    </span>
+  </a>
+
   <nav class="topnav" id="topnav" hidden>
-    <button class="nav-link" data-view="dashboard">Keyring</button>
-    <button class="nav-link" data-view="nlogin">Nlogin</button>
+    <button class="nav-link active" data-view="dashboard">Keyring</button>
+    <button class="nav-link" data-view="nlogin">nlogin</button>
     <button class="nav-link" data-view="settings">Settings</button>
   </nav>
+
   <div class="topbar-actions">
-    <button id="themeToggle" class="icon-btn" title="Toggle theme" aria-label="Toggle theme">
+    <span id="masterIdent" style="font-family:var(--font-mono);font-size:0.72rem;color:var(--text-faint);"></span>
+    <button class="icon-btn" id="themeToggle" title="Toggle theme">
       <span class="theme-icon-light">☀</span>
       <span class="theme-icon-dark">☾</span>
     </button>
-    <button id="logoutBtn" class="icon-btn" title="Lock" hidden>⏻</button>
+    <button class="icon-btn" id="logoutBtn" hidden title="Log out">⏻</button>
   </div>
 </header>
 
+<!-- ========== App ========== -->
 <main id="app">
-  <!-- Unlock / Login view -->
-  <section class="view" id="view-login" data-view="login">
+
+  <!-- Login -->
+  <section class="view" data-view="login">
     <div class="hero">
-      <h1 class="hero-title">
-        Your keys, <em>at rest</em>.
-      </h1>
-      <img src="assets/nks.svg" alt="" class="hero-logo" />
-      <p class="hero-sub">
-        A masterkey-side signer for a nostr keyring implementation proposal.<br>Hold your rootkeys, delegate the rest.
-      </p>
+      <img src="assets/nks.svg" alt="NKS" class="hero-logo" />
+      <h1 class="hero-title">Your keys,<br /><em>your keyring</em></h1>
+      <p class="hero-sub">A Nostr keyring signer that manages subkeys, otherkeys and masterkey references — all encrypted in your browser.</p>
     </div>
     <div class="card login-card" id="loginCard"></div>
   </section>
 
   <!-- Dashboard -->
-  <section class="view" id="view-dashboard" data-view="dashboard" hidden>
+  <section class="view" data-view="dashboard" hidden>
     <div class="view-header">
       <div>
         <h2 class="view-title">Keyring</h2>
-        <p class="view-sub" id="masterIdent"></p>
+        <p class="view-sub">Manage the keys in your masterkey's keyring.</p>
       </div>
       <div class="view-actions">
-        <button class="btn-primary" data-action="new-related-key">+ New related key</button>
-        <button class="btn-primary" data-action="import-related-key">+ Import related key</button>
+        <button class="btn-primary" data-action="new-related-key">+ New key</button>
+        <button class="btn-secondary" data-action="import-related-key">Import key</button>
       </div>
     </div>
-    <div class="key-master" id="masterCard"></div>
+    <div id="masterCard"></div>
     <div class="keys-grid" id="keysGrid"></div>
-    <div class="empty-state" id="keysEmpty" hidden>
+    <div id="keysEmpty" class="empty-state" hidden>
       <div class="empty-mark">⟁</div>
-      <h3>No related keys yet</h3>
-      <p>Generate a fresh subkey or import an <code>nlogin…</code> from a login program.</p>
+      <h3>No keys yet</h3>
+      <p>Generate a subkey or import one to get started.</p>
     </div>
   </section>
 
-  <!-- Nlogin (import + export) -->
-  <section class="view" id="view-nlogin" data-view="nlogin" hidden>
+  <!-- Key Detail / New / Import -->
+  <section class="view" data-view="key" hidden>
+    <button class="btn-back" data-action="back-to-dashboard">← Back to keyring</button>
+    <div class="card key-detail-card" id="keyDetailCard"></div>
+  </section>
+
+  <!-- nlogin (tabbed: import / export) -->
+  <section class="view" data-view="nlogin" hidden>
     <div class="view-header">
       <div>
-        <h2 class="view-title">Nlogin</h2>
-        <p class="view-sub">Import or export <code>nlogin1…</code> strings to share subkeys with login programs.</p>
+        <h2 class="view-title">nlogin</h2>
+        <p class="view-sub">Import or export <code>nlogin1…</code> strings for key sharing.</p>
       </div>
     </div>
     <div class="login-tabs" id="nloginTabs" role="tablist">
@@ -88,37 +97,31 @@
     <div id="nloginContent"></div>
   </section>
 
-  <!-- Key detail / share -->
-  <section class="view" id="view-key" data-view="key" hidden>
+  <!-- Settings -->
+  <section class="view" data-view="settings" hidden>
     <div class="view-header">
-      <button class="btn-back" data-action="back-to-dashboard">← Keyring</button>
+      <h2 class="view-title">Settings</h2>
     </div>
-    <div class="card key-detail-card" id="keyDetailCard"></div>
+    <div class="card" id="settingsCard"></div>
   </section>
 
-  <!-- Settings -->
-  <section class="view" id="view-settings" data-view="settings" hidden>
-    <div class="view-header">
-      <div>
-        <h2 class="view-title">Settings</h2>
-      </div>
-    </div>
-    <div class="card settings-card" id="settingsCard"></div>
-  </section>
 </main>
 
-<!-- Toast container -->
-<div class="toast-stack" id="toasts"></div>
-
-<!-- Modal container -->
-<div class="modal-root" id="modalRoot" hidden></div>
-
+<!-- ========== Footer ========== -->
 <footer class="footer">
-  <span>this app protocol: <a href="https://github.com/adq8z9/keyring_nip">nostr keyring nip</a></span>
+  <span>NKS</span>
   <span>·</span>
-  <span>this app code: <a href="https://github.com/adq8z9/nks">nostr keyring signer</a></span>
+  <span>nostr keyring signer</span>
+  <span>·</span>
+  <span>your keys, your keyring</span>
 </footer>
 
+<!-- ========== Overlays ========== -->
+<div id="toasts" class="toast-stack"></div>
+<div id="modalRoot" class="modal-root" hidden></div>
+
+<!-- ========== Boot ========== -->
 <script type="module" src="js/main.js"></script>
+
 </body>
 </html>
