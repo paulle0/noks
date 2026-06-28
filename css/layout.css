@@ -175,4 +175,6 @@
   letter-spacing: 0.04em;
   border-top: 1px solid var(--border);
 }
-.footer span:nth-child(even) { color: var(--text-faint); opacity: 0.5; }
+.footer a { color: var(--text-faint); text-decoration: none; transition: color 180ms var(--ease); }
+.footer a:hover { color: var(--accent-2); }
+.footer span { color: var(--text-faint); opacity: 0.5; }
