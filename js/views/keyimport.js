@@ -19,38 +19,23 @@ export function renderImportRelatedKeyForm(root) {
   ).join("");
 
   root.innerHTML = `
-    <div class="detail-head">
-      <h2 class="detail-name">Import related key</h2>
-    </div>
-    <p class="card-subtitle">Paste an existing secret key (nsec / hex) or public key (npub / hex) to add it to your keyring.</p>
-
-    <div class="field">
-      <label>Key type</label>
+    <div class="detail-head"><h2 class="detail-name">Import related key</h2></div>
+    <p class="card-subtitle">Paste an existing key to add it to your keyring.</p>
+    <div class="field"><label>Key type</label>
       <div class="checkbox-row" id="keyTypeRow">
-        <label class="chip-check"><input type="radio" name="keyType" value="secret" checked /> Secret key (nsec / hex)</label>
-        <label class="chip-check"><input type="radio" name="keyType" value="public" /> Public key (npub / hex)</label>
-      </div>
-    </div>
-
+        <label class="chip-check"><input type="radio" name="keyType" value="secret" checked /> Secret key</label>
+        <label class="chip-check"><input type="radio" name="keyType" value="public" /> Public key</label>
+      </div></div>
     <div class="field">
       <label id="keyInputLabel">Secret key</label>
       <input id="importKeyInput" class="input mono" placeholder="nsec1… or 64-char hex" autocomplete="off" />
-      <p class="field-hint" id="keyInputHint">The public key will be derived automatically.</p>
-    </div>
-
+      <p class="field-hint" id="keyInputHint">The public key will be derived automatically.</p></div>
     <div id="derivedInfo" hidden>
-      <div class="field">
-        <label>Derived public key (npub)</label>
-        <div class="hex" id="derivedNpub"></div>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Relation type</label>
+      <div class="field"><label>Derived public key (npub)</label>
+        <div class="hex" id="derivedNpub"></div></div></div>
+    <div class="field"><label>Relation type</label>
       <div class="checkbox-row" id="relationRow">${relOptions}</div>
-      <p class="field-hint" id="relationHint">${relations[0].desc}</p>
-    </div>
-
+      <p class="field-hint" id="relationHint">${relations[0].desc}</p></div>
     <div class="field"><label>Name</label>
       <input id="impName" class="input" placeholder="e.g. Damus iOS" /></div>
     <div class="field"><label>Description</label>
@@ -60,8 +45,9 @@ export function renderImportRelatedKeyForm(root) {
         ${["signing","certify","encryption","authentication"].map((f) =>
           `<label class="chip-check"><input type="checkbox" value="${f}"
             ${f === "signing" ? "checked" : ""}> ${f}</label>`).join("")}
-      </div>
-    </div>
+      </div></div>
+    <div class="field"><label>Delegation rules</label>
+      <input id="impDelegation" class="input mono" placeholder='e.g. kind=1|kind=2 (optional)' /></div>
     <button class="btn-primary" id="importRelBtn" style="width:100%">Import key</button>`;
 
   wireKeyTypeToggle(root);
@@ -77,7 +63,7 @@ function wireKeyTypeToggle(root) {
     root.querySelector("#importKeyInput").placeholder = isSecret
       ? "nsec1… or 64-char hex" : "npub1… or 64-char hex";
     root.querySelector("#keyInputHint").textContent = isSecret
-      ? "The public key will be derived automatically." : "Only the public key will be stored (no signing capability).";
+      ? "The public key will be derived automatically." : "Only the public key will be stored.";
     root.querySelector("#derivedInfo").hidden = true;
     root.querySelector("#importKeyInput").value = "";
   });
@@ -115,46 +101,39 @@ function previewKey(root) {
       root.querySelector("#derivedNpub").textContent = npubFromHex(pubHex);
       info.hidden = false;
     }
-  } catch {
-    info.hidden = true;
-  }
+  } catch { info.hidden = true; }
 }
 
 function resolveSecretHex(raw) {
   if (isNsec(raw)) return hexFromAny(raw);
   if (isValidHexKey(raw)) return raw.toLowerCase();
-  throw new Error("Not a valid nsec or 64-char hex secret key");
+  throw new Error("Not a valid nsec or hex secret key");
 }
 
 function resolvePublicHex(raw) {
   if (isNpub(raw)) return hexFromAny(raw);
   if (isValidHexKey(raw)) return raw.toLowerCase();
-  throw new Error("Not a valid npub or 64-char hex public key");
+  throw new Error("Not a valid npub or hex public key");
 }
 
 async function onImport(root) {
   const raw = root.querySelector("#importKeyInput").value.trim();
   if (!raw) { toast("Paste a key first", "error"); return; }
-
   const isSecret = root.querySelector('input[name="keyType"]:checked').value === "secret";
   let seckey = null, pubkey = null;
-
   try {
-    if (isSecret) {
-      seckey = resolveSecretHex(raw);
-      pubkey = getPublicKeyHex(seckey);
-    } else {
-      pubkey = resolvePublicHex(raw);
-    }
+    if (isSecret) { seckey = resolveSecretHex(raw); pubkey = getPublicKeyHex(seckey); }
+    else { pubkey = resolvePublicHex(raw); }
   } catch (e) { toast(e.message, "error"); return; }
 
   const relation = root.querySelector('input[name="relationType"]:checked').value;
   const name = root.querySelector("#impName").value.trim();
   const description = root.querySelector("#impDesc").value.trim();
+  const delegation = root.querySelector("#impDelegation").value.trim();
   const functions = [...root.querySelectorAll(".chip-check input[type=checkbox]:checked")]
     .map((i) => i.value);
 
-  await addKeyEntry({ relation, pubkey, seckey, name, description, functions });
+  await addKeyEntry({ relation, pubkey, seckey, name, description, functions, delegation });
   toast("Key imported to your keyring", "success");
   setState({ view: "key", selectedKey: pubkey, _importKey: false });
 }

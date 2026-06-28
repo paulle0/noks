@@ -30,9 +30,11 @@ function renderUnlock(root) {
       <button class="btn-back" id="resetBtn">Start fresh (deletes local vault)</button>
     </div>`;
   root.querySelector("#unlockBtn").addEventListener("click", () => doUnlock(root));
-  root.querySelector("#pw").addEventListener("keydown", (e) => { if (e.key === "Enter") doUnlock(root); });
+  root.querySelector("#pw").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") doUnlock(root);
+  });
   root.querySelector("#resetBtn").addEventListener("click", async () => {
-    if (!confirm("This will delete your local vault. Your published keyring on relays is not affected. Continue?")) return;
+    if (!confirm("This will delete your local vault. Continue?")) return;
     localStorage.clear();
     location.reload();
   });
@@ -54,7 +56,7 @@ async function doUnlock(root) {
 function renderCreate(root) {
   root.innerHTML = `
     <h2 class="card-title">Set up your signer</h2>
-    <p class="card-subtitle">Generate a new masterkey, or import an existing one. Your secret is encrypted locally with the password below.</p>
+    <p class="card-subtitle">Generate a new masterkey, or import an existing one.</p>
     <div class="login-tabs" role="tablist">
       <button class="active" data-tab="gen">Generate</button>
       <button data-tab="import">Import</button>
@@ -88,9 +90,11 @@ function renderCreatePanel(panel, tab) {
     <div class="field">
       <label>Vault password</label>
       <input id="vaultPw" class="input" type="password" placeholder="Encrypts your local vault" />
-      <p class="field-hint">Choose a strong password. Without it, your local vault cannot be unlocked.</p>
+      <p class="field-hint">Choose a strong password.</p>
     </div>
-    <button class="btn-primary" id="setupBtn" style="width:100%">${tab === "import" ? "Import & secure" : "Generate & secure"}</button>`;
+    <button class="btn-primary" id="setupBtn" style="width:100%">
+      ${tab === "import" ? "Import & secure" : "Generate & secure"}
+    </button>`;
   wireRelayList(panel);
   panel.querySelector("#setupBtn").addEventListener("click", () => doSetup(panel, tab));
 }
@@ -134,7 +138,6 @@ async function doSetup(panel, tab) {
   setState({ masterkey, keyring: [], view: "dashboard" });
   toast("Vault created", "success");
 
-  // For imported keys, try to pull existing keyring from relays
   if (tab === "import") {
     await fetchAndMergeKeyring(masterkey);
   }

@@ -84,7 +84,6 @@ function showDecodedPreview(root, d) {
   const warning = masterMatches ? ""
     : `<p style="color:var(--warning); font-size:0.85rem; margin-top:var(--space-2);">
        ⚠ This nlogin references a different masterkey: <code>${shortHex(d.masterPub)}</code>.
-       You can still record it as an "Other" relation.
        </p>`;
   root.querySelector("#decodedPreview").innerHTML = `
     <div style="margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--border);">
@@ -101,8 +100,7 @@ function showDecodedPreview(root, d) {
         <div class="checkbox-row">
           ${["signing","certify","encryption","authentication"].map((f) =>
             `<label class="chip-check"><input type="checkbox" value="${f}"> ${f}</label>`).join("")}
-        </div>
-      </div>
+        </div></div>
       ${warning}
       <button class="btn-primary" id="addToRing" style="width:100%; margin-top:var(--space-3);">
         Add as ${masterMatches ? '"S" subkey' : '"O" other key'} to my keyring
@@ -116,7 +114,7 @@ function showDecodedPreview(root, d) {
     await addKeyEntry({
       relation: masterMatches ? "S" : "O",
       pubkey, seckey: d.subkeySec || null,
-      name, description, functions,
+      name, description, functions, delegation: "",
     });
     toast("Key added to your keyring", "success");
     setState({ view: "dashboard" });

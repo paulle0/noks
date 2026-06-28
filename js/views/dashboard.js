@@ -15,7 +15,7 @@ export function renderDashboard() {
 }
 
 function wireActions() {
-  document.querySelectorAll('[data-action]').forEach((b) => {
+  document.querySelectorAll("[data-action]").forEach((b) => {
     if (b.dataset.bound) return;
     b.dataset.bound = "1";
     b.addEventListener("click", () => handleAction(b.dataset.action));
@@ -106,7 +106,6 @@ function renderKeysGrid() {
   grid.innerHTML = state.keyring.map(keyCardHtml).join("");
   grid.querySelectorAll(".key-card").forEach((card) => {
     card.addEventListener("click", () => {
-      // Bug fix: clear form flags so key detail shows the actual key
       setState({
         view: "key",
         selectedKey: card.dataset.pubkey,

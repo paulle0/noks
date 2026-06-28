@@ -17,6 +17,8 @@ export async function renderKeyDetail() {
 
 function renderExistingKey(root, key) {
   const npub = npubFromHex(key.pubkey);
+  const delegationDisplay = key.delegation
+    ? `<div class="field"><label>Delegation</label><div class="hex">${escapeHtml(key.delegation)}</div></div>` : "";
 
   root.innerHTML = `
     <div class="detail-head">
@@ -34,14 +36,12 @@ function renderExistingKey(root, key) {
     </div>
 
     <div id="editPanel" hidden>
-      <div class="field">
-        <label>Name</label>
-        <input id="editName" class="input" value="${escapeHtml(key.name || "")}" placeholder="e.g. Damus iOS" />
-      </div>
-      <div class="field">
-        <label>Description</label>
-        <input id="editDesc" class="input" value="${escapeHtml(key.description || "")}" placeholder="optional" />
-      </div>
+      <div class="field"><label>Name</label>
+        <input id="editName" class="input" value="${escapeHtml(key.name || "")}" placeholder="e.g. Damus iOS" /></div>
+      <div class="field"><label>Description</label>
+        <input id="editDesc" class="input" value="${escapeHtml(key.description || "")}" placeholder="optional" /></div>
+      <div class="field"><label>Delegation rules</label>
+        <input id="editDelegation" class="input mono" value="${escapeHtml(key.delegation || "")}" placeholder='e.g. kind=1|kind=2' /></div>
       <div style="display:flex; gap:var(--space-2); margin-bottom:var(--space-5);">
         <button class="btn-primary" id="saveEditBtn">Save</button>
         <button class="btn-ghost" id="cancelEditBtn">Cancel</button>
@@ -50,21 +50,18 @@ function renderExistingKey(root, key) {
 
     <div class="detail-section">
       <h4>Identifier</h4>
-      <div class="field">
-        <label>npub</label>
+      <div class="field"><label>npub</label>
         <div class="copy-row">
           <input class="input mono" value="${escapeHtml(npub)}" readonly />
           <button class="copy-btn" data-copy="${escapeHtml(npub)}">Copy</button>
-        </div>
-      </div>
-      <div class="field">
-        <label>hex pubkey</label>
+        </div></div>
+      <div class="field"><label>hex pubkey</label>
         <div class="copy-row">
           <input class="input mono" value="${escapeHtml(key.pubkey)}" readonly />
           <button class="copy-btn" data-copy="${escapeHtml(key.pubkey)}">Copy</button>
-        </div>
-      </div>
+        </div></div>
       ${key.seckey ? secretBlock(key.seckey) : ""}
+      ${delegationDisplay}
     </div>`;
 
   attachCopy(root);
@@ -82,7 +79,8 @@ function toggleEdit(root, show) {
 async function onSaveEdit(root, key) {
   const name = root.querySelector("#editName").value.trim();
   const description = root.querySelector("#editDesc").value.trim();
-  await addKeyEntry({ ...key, name, description });
+  const delegation = root.querySelector("#editDelegation").value.trim();
+  await addKeyEntry({ ...key, name, description, delegation });
   toast("Key updated", "success");
   setState({ view: "key", selectedKey: key.pubkey });
 }
@@ -105,7 +103,7 @@ function relLabel(r) {
 async function onDelete(key) {
   const ok = await modal({
     title: "Delete this key?",
-    body: `<p>Removes <strong>${escapeHtml(key.name || shortHex(key.pubkey))}</strong> from your local keyring. Publishing a fresh kind 17991 afterwards will remove it from your remote keyring as well.</p>`,
+    body: `<p>Removes <strong>${escapeHtml(key.name || shortHex(key.pubkey))}</strong> from your local keyring.</p>`,
     confirmText: "Delete", confirmKind: "danger",
   });
   if (!ok) return;
@@ -128,16 +126,11 @@ function renderNewRelatedKeyForm(root) {
   ).join("");
 
   root.innerHTML = `
-    <div class="detail-head">
-      <h2 class="detail-name">New related key</h2>
-    </div>
-    <p class="card-subtitle">Generate a fresh keypair and add it to your keyring.
-      The nsec stays in this vault — you'll share an <code>nlogin1…</code> instead.</p>
-    <div class="field">
-      <label>Relation type</label>
+    <div class="detail-head"><h2 class="detail-name">New related key</h2></div>
+    <p class="card-subtitle">Generate a fresh keypair and add it to your keyring.</p>
+    <div class="field"><label>Relation type</label>
       <div class="checkbox-row" id="relationRow">${relOptions}</div>
-      <p class="field-hint" id="relationHint">${relations[0].desc}</p>
-    </div>
+      <p class="field-hint" id="relationHint">${relations[0].desc}</p></div>
     <div class="field"><label>Name</label>
       <input id="nName" class="input" placeholder="e.g. Damus iOS" /></div>
     <div class="field"><label>Description</label>
@@ -147,8 +140,9 @@ function renderNewRelatedKeyForm(root) {
         ${["signing","certify","encryption","authentication"].map((f) =>
           `<label class="chip-check"><input type="checkbox" value="${f}"
             ${f==="signing"?"checked":""}> ${f}</label>`).join("")}
-      </div>
-    </div>
+      </div></div>
+    <div class="field"><label>Delegation rules</label>
+      <input id="nDelegation" class="input mono" placeholder='e.g. kind=1|kind=2 (optional)' /></div>
     <button class="btn-primary" id="createRelBtn" style="width:100%">Generate key</button>`;
 
   root.querySelector("#relationRow").addEventListener("change", (e) => {
@@ -160,10 +154,11 @@ function renderNewRelatedKeyForm(root) {
     const relation = root.querySelector('input[name="relationType"]:checked').value;
     const name = root.querySelector("#nName").value.trim();
     const description = root.querySelector("#nDesc").value.trim();
+    const delegation = root.querySelector("#nDelegation").value.trim();
     const fns = [...root.querySelectorAll(".chip-check input[type=checkbox]:checked")]
       .map((i) => i.value);
     const { seckey, pubkey } = generateKeyPair();
-    await addKeyEntry({ relation, pubkey, seckey, name, description, functions: fns });
+    await addKeyEntry({ relation, pubkey, seckey, name, description, functions: fns, delegation });
     toast("Key added — ready to share", "success");
     setState({ view: "key", selectedKey: pubkey, _newSubkey: false });
   });

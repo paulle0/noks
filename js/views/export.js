@@ -37,7 +37,6 @@ export async function renderExport() {
     if (pubkey) showExportResult(root, pubkey);
   });
 
-  // If a key was pre-selected (e.g. from detail view), auto-show it
   if (state._exportKey) {
     const sel = root.querySelector("#exportSelect");
     sel.value = state._exportKey;
@@ -71,26 +70,18 @@ async function showExportResult(root, pubkey) {
   const result = root.querySelector("#exportResult");
 
   result.innerHTML = `
-    <div style="margin-top:var(--space-5); padding-top:var(--space-4);
-                border-top:1px solid var(--border);">
+    <div style="margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--border);">
+      <div class="field"><label>Key name</label>
+        <div class="hex">${escapeHtml(key.name || "Untitled key")}</div></div>
+      <div class="field"><label>npub</label>
+        <div class="hex">${escapeHtml(npub)}</div></div>
       <div class="field">
-        <label>Key name</label>
-        <div class="hex">${escapeHtml(key.name || "Untitled key")}</div>
-      </div>
-      <div class="field">
-        <label>npub</label>
-        <div class="hex">${escapeHtml(npub)}</div>
-      </div>
-      <div class="field">
-        <label>Shares ${includeSec ? "secret key" : "public key only"}</label>
-      </div>
-      <div class="field">
-        <label>nlogin string</label>
+        <label>Shares ${includeSec ? "secret key" : "public key only"}</label></div>
+      <div class="field"><label>nlogin string</label>
         <div class="copy-row">
           <input class="input mono" value="${escapeHtml(nlogin)}" readonly />
           <button class="copy-btn" data-copy="${escapeHtml(nlogin)}">Copy</button>
-        </div>
-      </div>
+        </div></div>
       <div class="qr-display" id="exportQr"></div>
     </div>`;
 

@@ -9,11 +9,9 @@ export async function renderNlogin() {
   const content = document.getElementById("nloginContent");
   const tabs = document.getElementById("nloginTabs");
 
-  // Wire tab clicks only once — buttons are in static HTML and persist
   if (!tabsBound) {
     tabs.querySelectorAll("button").forEach((btn) => {
       btn.addEventListener("click", async () => {
-        // Stop scanner when switching away from import
         if (currentTab === "import" && btn.dataset.tab !== "import") {
           await leaveImport();
         }
@@ -26,7 +24,6 @@ export async function renderNlogin() {
     tabsBound = true;
   }
 
-  // Highlight the correct tab
   tabs.querySelectorAll("button").forEach((b) => {
     b.classList.toggle("active", b.dataset.tab === currentTab);
   });
