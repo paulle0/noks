@@ -1,10 +1,9 @@
-// js/keyring.js — Orchestrates building+publishing keyring events for masterkey and subkey
+// js/keyring.js — Orchestrates building+publishing keyring events
 import { state, upsertKey, removeKey } from "./state.js";
 import { buildPublicKeyring, buildPrivateKeyring } from "./events.js";
 import { publish } from "./relays.js";
 import { saveVault } from "./storage.js";
 
-// In-memory password for re-saving the vault. Set after unlock.
 let sessionPassword = null;
 
 export function setSessionPassword(pw) {
@@ -19,9 +18,6 @@ export async function persistVault() {
   }, sessionPassword);
 }
 
-/**
- * Add a key entry to the local keyring and persist.
- */
 export async function addKeyEntry(entry) {
   upsertKey(entry);
   await persistVault();
@@ -33,51 +29,53 @@ export async function removeKeyEntry(pubkey) {
 }
 
 /**
- * Publish the masterkey's kind 17991 event listing all known related keys.
+ * Publish the masterkey's kind 17991 (public) event.
+ * Spec: tags = ["P", pubkey], content = JSON([{pubkey, relation, function, delegation}])
  */
 export async function publishMasterPublicKeyring() {
   const m = state.masterkey;
   if (!m || !m.seckey) throw new Error("Masterkey secret key required");
   const entries = state.keyring.map((k) => ({
-    relation: k.relation, pubkey: k.pubkey, functions: k.functions,
+    relation: k.relation,
+    pubkey: k.pubkey,
+    functions: k.functions || [],
+    delegation: k.delegation || "",
   }));
   const evt = buildPublicKeyring(m.seckey, entries);
   return publish(evt, m.homeRelays);
 }
 
 /**
- * Publish the masterkey's kind 17992 (private) event with optional secret keys included.
+ * Publish the masterkey's kind 17992 (private) event.
+ * Spec: content = encrypted([{pubkey, seckey, name, description}])
  */
 export async function publishMasterPrivateKeyring() {
   const m = state.masterkey;
   if (!m || !m.seckey) throw new Error("Masterkey secret key required");
   const payload = state.keyring.map((k) => ({
-    relation: k.relation,
-    name: k.name || "",
-    description: k.description || "",
     pubkey: k.pubkey,
     seckey: k.seckey || null,
-    function: k.functions || [],
+    name: k.name || "",
+    description: k.description || "",
   }));
   const evt = buildPrivateKeyring(m.seckey, m.pubkey, payload);
   return publish(evt, m.homeRelays);
 }
 
 /**
- * Build a kind 17991 event from the SUBKEY's perspective (subkey publishes the
- * relation back to its masterkey). Requires the subkey's secret key.
+ * Publish a kind 17991 from the SUBKEY's perspective — the subkey
+ * publishes a reference back to its masterkey.
  */
 export async function publishSubkeyKeyring(subkey) {
-  if (!subkey.seckey) throw new Error("Subkey secret key required to publish from subkey");
+  if (!subkey.seckey) throw new Error("Subkey secret key required");
   const m = state.masterkey;
-  const entries = [{ relation: "M", pubkey: m.pubkey, functions: ["certify"] }];
+  const entries = [
+    { relation: "M", pubkey: m.pubkey, functions: ["certify"], delegation: "" },
+  ];
   const evt = buildPublicKeyring(subkey.seckey, entries);
   return publish(evt, m.homeRelays);
 }
 
-/**
- * Logout: clear in-memory state. Does NOT delete the vault.
- */
 export function lockSession() {
   sessionPassword = null;
 }

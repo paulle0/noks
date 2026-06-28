@@ -1,8 +1,6 @@
 // js/relays.js — Simple relay client for publishing keyring events
-import { SimplePool } from "https://esm.sh/nostr-tools@2.7.2/pool";
-import { useWebSocketImplementation } from "https://esm.sh/nostr-tools@2.7.2/pool";
+import { SimplePool, useWebSocketImplementation } from "../vendor/nostr-tools-pool.js";
 
-// Browser already has WebSocket; just ensure the lib uses it.
 try { useWebSocketImplementation(WebSocket); } catch {}
 
 let pool = null;
@@ -19,7 +17,7 @@ export function disposePool() {
 }
 
 /**
- * Publish a signed event to a set of relays. Resolves with a per-relay result.
+ * Publish a signed event to a set of relays.
  */
 export async function publish(event, relays) {
   if (!relays || relays.length === 0) {
@@ -35,7 +33,7 @@ export async function publish(event, relays) {
 }
 
 /**
- * Fetch the latest kind-17991 (or other) event for an author from relays.
+ * Fetch the latest event matching a filter from relays.
  */
 export async function fetchLatest(relays, filter) {
   if (!relays || relays.length === 0) return null;

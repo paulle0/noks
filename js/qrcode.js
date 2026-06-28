@@ -1,5 +1,5 @@
 // js/qrcode.js — QR generation (svg) + scanning via html5-qrcode
-import QRCode from "https://esm.sh/qrcode@1.5.3";
+import QRCode from "../vendor/qrcode.js";
 
 let html5QrCode = null;
 
@@ -14,21 +14,19 @@ export async function renderQrSvg(text, target) {
 }
 
 /**
- * Lazy-load html5-qrcode and start scanning into a DOM element with given id.
+ * Lazy-load html5-qrcode from local vendor file and start scanning.
  * Returns a stop function.
  */
 export async function startScanner(elementId, onResult) {
-  // html5-qrcode is a UMD/IIFE bundle — load via <script> if not present.
   if (!window.Html5Qrcode) {
     await new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js";
+      s.src = "vendor/html5-qrcode.min.js";
       s.onload = resolve;
       s.onerror = () => reject(new Error("Failed to load QR scanner library"));
       document.head.appendChild(s);
     });
   }
-  // Clean previous instance
   if (html5QrCode) {
     try { await html5QrCode.stop(); } catch {}
     html5QrCode = null;
@@ -38,7 +36,7 @@ export async function startScanner(elementId, onResult) {
     { facingMode: "environment" },
     { fps: 10, qrbox: { width: 240, height: 240 } },
     (decoded) => onResult(decoded),
-    () => {}
+    () => {},
   );
   return async function stop() {
     if (!html5QrCode) return;

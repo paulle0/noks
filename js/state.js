@@ -3,7 +3,7 @@ const listeners = new Set();
 
 export const state = {
   masterkey: null,        // { pubkey, seckey, homeRelays }
-  keyring: [],            // [{ relation, pubkey, seckey?, name, description, functions[] }]
+  keyring: [],            // [{ relation, pubkey, seckey?, name, description, functions[], delegation }]
   view: "login",
   theme: "dark",
 };

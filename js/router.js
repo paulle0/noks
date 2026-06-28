@@ -22,17 +22,14 @@ export async function applyView() {
   allViews.forEach((el) => { el.hidden = el.dataset.view !== v; });
   const fn = renderers[v];
   if (fn) await fn();
-  // Toggle topnav visibility based on auth
   const topnav = document.getElementById("topnav");
   const logoutBtn = document.getElementById("logoutBtn");
   const authed = !!state.masterkey;
   topnav.hidden = !authed || v === "login";
   logoutBtn.hidden = !authed;
-  // active link styling
   topnav.querySelectorAll(".nav-link").forEach((b) => {
     b.classList.toggle("active", b.dataset.view === v || (v === "key" && b.dataset.view === "dashboard"));
   });
-  // Stop scanner if leaving nlogin
   if (currentView === "nlogin" && v !== "nlogin") await leaveNlogin();
   currentView = v;
 }
@@ -41,7 +38,6 @@ export function wireTopNav() {
   document.getElementById("topnav").addEventListener("click", (e) => {
     const btn = e.target.closest(".nav-link");
     if (!btn) return;
-    // Clear form flags when navigating via top nav
     import("./state.js").then((m) => m.setState({
       view: btn.dataset.view,
       _newSubkey: false,

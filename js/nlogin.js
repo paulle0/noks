@@ -1,12 +1,12 @@
 // js/nlogin.js — Encode/decode the 'nlogin1...' bech32 TLV string
 //
-// TLV layout (extending the spec to distinguish seckey vs pubkey):
+// TLV layout:
 //   0 → 32-byte subkey SECRET key (mutually exclusive with type 4)
 //   1 → relay URL (ASCII bytes), repeatable
 //   2 → 32-byte masterkey public key
 //   3 → keyring kind number (4-byte big-endian uint32)
 //   4 → 32-byte subkey PUBLIC key (used when secret key not shared)
-import { bech32 } from "https://esm.sh/@scure/base@1.1.7";
+import { bech32 } from "../vendor/scure-base.js";
 import { hexToBytes, bytesToHex } from "./crypto.js";
 
 const PREFIX = "nlogin";
@@ -14,7 +14,7 @@ const enc = new TextEncoder();
 const dec = new TextDecoder();
 
 function writeTLV(type, value) {
-  if (value.length > 255) throw new Error("TLV value too long for single byte length");
+  if (value.length > 255) throw new Error("TLV value too long");
   return Uint8Array.of(type, value.length, ...value);
 }
 
@@ -28,7 +28,10 @@ function concatBytes(...arrs) {
 }
 
 function u32BE(n) {
-  return Uint8Array.of((n >>> 24) & 0xff, (n >>> 16) & 0xff, (n >>> 8) & 0xff, n & 0xff);
+  return Uint8Array.of(
+    (n >>> 24) & 0xff, (n >>> 16) & 0xff,
+    (n >>> 8) & 0xff, n & 0xff,
+  );
 }
 
 function readU32BE(bytes) {
