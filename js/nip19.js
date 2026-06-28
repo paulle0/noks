@@ -1,5 +1,5 @@
 // js/nip19.js — npub / nsec / nprofile encoding via nostr-tools
-import { nip19 } from "../vendor/nostr-tools.js";
+import { nip19 } from "../lib/nostr-tools.js";
 
 export function npubFromHex(hex) {
   return nip19.npubEncode(hex);

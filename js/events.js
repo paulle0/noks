@@ -9,8 +9,8 @@
 //     tags:    [["encryption", "nip44_v2"]]
 //     content: nip44_encrypted([{ pubkey, seckey, name, description }, ...])
 
-import { finalizeEvent, getEventHash } from "../vendor/nostr-tools-pure.js";
-import { nip44 } from "../vendor/nostr-tools.js";
+import { finalizeEvent, getEventHash } from "../lib/nostr-tools-pure.js";
+import { nip44 } from "../lib/nostr-tools.js";
 import { hexToBytes } from "./crypto.js";
 
 const KIND_PUBLIC = 17991;

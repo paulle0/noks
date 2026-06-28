@@ -6,7 +6,7 @@
 //   2 → 32-byte masterkey public key
 //   3 → keyring kind number (4-byte big-endian uint32)
 //   4 → 32-byte subkey PUBLIC key (used when secret key not shared)
-import { bech32 } from "../vendor/scure-base.js";
+import { bech32 } from "../lib/scure-base.js";
 import { hexToBytes, bytesToHex } from "./crypto.js";
 
 const PREFIX = "nlogin";

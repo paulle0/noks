@@ -1,5 +1,5 @@
 // js/qrcode.js — QR generation (svg) + scanning via html5-qrcode
-import QRCode from "../vendor/qrcode.js";
+import QRCode from "../lib/qrcode.js";
 
 let html5QrCode = null;
 
@@ -21,7 +21,7 @@ export async function startScanner(elementId, onResult) {
   if (!window.Html5Qrcode) {
     await new Promise((resolve, reject) => {
       const s = document.createElement("script");
-      s.src = "vendor/html5-qrcode.min.js";
+      s.src = "lib/html5-qrcode.min.js";
       s.onload = resolve;
       s.onerror = () => reject(new Error("Failed to load QR scanner library"));
       document.head.appendChild(s);

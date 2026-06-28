@@ -1,5 +1,5 @@
 // js/relays.js — Simple relay client for publishing keyring events
-import { SimplePool, useWebSocketImplementation } from "../vendor/nostr-tools-pool.js";
+import { SimplePool, useWebSocketImplementation } from "../lib/nostr-tools-pool.js";
 
 try { useWebSocketImplementation(WebSocket); } catch {}
 

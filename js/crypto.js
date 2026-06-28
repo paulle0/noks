@@ -1,6 +1,6 @@
 // js/crypto.js — Nostr crypto helpers (key generation, hex utils)
-import { schnorr } from "../vendor/noble-curves-secp256k1.js";
-import { bytesToHex, hexToBytes } from "../vendor/noble-hashes-utils.js";
+import { schnorr } from "../lib/noble-curves-secp256k1.js";
+import { bytesToHex, hexToBytes } from "../lib/noble-hashes-utils.js";
 
 export { bytesToHex, hexToBytes };
 
