@@ -93,7 +93,7 @@ function renderCreatePanel(panel, tab) {
       <p class="field-hint">Choose a strong password.</p>
     </div>
     <button class="btn-primary" id="setupBtn" style="width:100%">
-      ${tab === "import" ? "Import & secure" : "Generate & secure"}
+      ${tab === "import" ? "Import & login" : "Generate & login"}
     </button>`;
   wireRelayList(panel);
   panel.querySelector("#setupBtn").addEventListener("click", () => doSetup(panel, tab));
